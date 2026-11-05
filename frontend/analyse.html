@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analyse | SentinelTI</title>
+  <meta name="description" content="Drop a sample and watch five agents analyse it statically.">
+  <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body data-page="analyse" data-nav-static>
+  <main id="main" class="workspace">
+    <!-- Sessions -->
+    <aside class="panel panel--sessions" aria-label="Sessions">
+      <div class="panel__head">
+        <h2 class="panel__title">Analyse</h2>
+        <button type="button" class="glass-cta" data-size="sm" id="new-session" data-swap="New">New</button>
+      </div>
+      <div class="panel__label">Sessions</div>
+      <div class="panel__scroll" data-lenis-prevent>
+        <ul class="sessions" id="sessions"></ul>
+      </div>
+    </aside>
+
+    <!-- Stage -->
+    <section class="panel panel--stage" aria-label="Analysis">
+      <div class="stage">
+        <button type="button" class="dropzone" id="dropzone" aria-label="Choose a sample file to analyse">
+          <span class="dropzone__scan" aria-hidden="true"></span>
+          <span>
+            <span class="dropzone__icon" aria-hidden="true"><span></span><span></span></span>
+            <span class="dropzone__title">Drop a sample</span>
+            <span class="dropzone__p">Static analysis only — the file goes into a locked quarantine<br>and is never executed.</span>
+            <span class="dropzone__p dropzone__hint">Or paste a file or SHA-256 with <kbd>⌘</kbd><kbd>V</kbd></span>
+            <span class="dropzone__plus" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M2 8h12"/></svg></span>
+          </span>
+        </button>
+        <input type="file" id="file-input" hidden>
+        <div class="thread" id="thread" data-lenis-prevent aria-live="polite"></div>
+
+        <form class="composer" id="composer" autocomplete="off">
+          <button type="button" class="composer__attach" id="attach" aria-label="Attach a sample" title="Attach a sample">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.5 4.5 5.2 9.8a1.5 1.5 0 0 0 2.1 2.1l5.6-5.6a3 3 0 0 0-4.2-4.2L3 7.8a4.5 4.5 0 0 0 6.4 6.4L14 9.6"/></svg>
+          </button>
+          <input id="prompt" type="text" placeholder="Analyse here…" aria-label="Ask about the sample or paste a SHA-256">
+          <button type="submit" class="composer__send" aria-label="Send">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1.5 14.5 8 8 14.5 1.5 8Z"/></svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Context & To-do -->
+    <aside class="panel panel--ctx" aria-label="Context and to-do list">
+      <div class="panel__head"><h2 class="panel__title">Context &amp; To-Do</h2><span class="chip" id="run-state">Idle</span></div>
+      <div class="panel__scroll" data-lenis-prevent>
+        <div class="panel__label">Sample</div>
+        <div class="ctx" id="ctx"><p class="ctx__empty" style="padding:0">No sample yet. Drop a file to begin — the Triage Agent fingerprints it before anything else runs.</p></div>
+        <div class="panel__label">Agent pipeline</div>
+        <ol class="todo" id="todo"></ol>
+      </div>
+      <div class="panel__foot">
+        <a class="glass-cta" href="report.html" id="open-graph" data-swap="Open Attack Graph">Open Attack Graph</a>
+        <button type="button" class="glass-cta" data-emph="primary" id="pdf" data-swap="Download PDF Report">Download PDF Report</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer data-footer></footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/analyse.js"></script>
+</body>
+</html>

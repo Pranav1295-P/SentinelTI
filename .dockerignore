@@ -1,0 +1,10 @@
+.git
+.venv
+.env
+.env.*
+.claude
+storage
+frontend
+Brand
+tests
+**/__pycache__

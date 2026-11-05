@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How it Works | SentinelTI</title>
+  <meta name="description" content="How SentinelTI turns a file into explainable threat intelligence with five agents.">
+  <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body data-page="about">
+  <main id="main">
+    <section class="story-hero">
+      <h1>
+        <span class="line-mask"><span data-hero-line>Every Sample Begins</span></span>
+        <span class="line-mask"><span data-hero-line>as Evidence</span></span>
+      </h1>
+      <p data-hero-sub>Start with a file.<br>SentinelTI turns its bytes into a verdict you can explain.</p>
+    </section>
+
+    <section class="story-media" aria-hidden="true">
+      <div class="story-media__frame">
+        <div class="story-media__card">
+          <canvas class="story-media__canvas"></canvas>
+          <div class="story-media__caption"><img src="assets/img/mark.svg" width="18" height="18" alt="">Static analysis · five agents · one evidence graph</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-intro">
+      <div class="chapter" style="padding:0">
+        <div class="chapter__body" data-reveal>
+          <p>SentinelTI reads a file without ever running it. It identifies what the file really is, extracts structured evidence from its headers, sections, imports and strings, and correlates that evidence into capabilities that can be proven.</p>
+          <p>Each finding is mapped to MITRE ATT&amp;CK, checked once more, and published as an interactive attack graph and a PDF report. The sections below explain each step.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="story">
+      <article class="chapter">
+        <div class="chapter__label">
+          <span class="chapter__num">1.1</span>
+          <h2 data-lines><span class="line-mask"><span>Start with</span></span><span class="line-mask"><span class="muted">a Sample</span></span></h2>
+        </div>
+        <div class="chapter__body" data-reveal>
+          <p>An investigation usually starts with one suspicious file: an attachment, a dropped binary, something a user downloaded. Deciding whether it is dangerous — and why — is the first job.</p>
+          <p>SentinelTI does that first pass for you and records how it reached its answer. You still own the decision, with the evidence in front of you.</p>
+        </div>
+      </article>
+
+      <article class="chapter">
+        <div class="chapter__label">
+          <span class="chapter__num">1.2</span>
+          <h2 data-lines><span class="line-mask"><span>How Sentinel</span></span><span class="line-mask"><span class="muted">Reads a File</span></span></h2>
+        </div>
+        <div class="chapter__body" data-reveal>
+          <p>Magic bytes reveal the real type, whatever the extension claims. Cryptographic hashes fingerprint it. Strings, PE headers, section tables and import tables expose what the code is built to do — and packers or high entropy show what it is trying to hide.</p>
+          <p>Every technique used by a manual analyst — HxD, PeStudio, FLOSS, Dependency Walker, YARA, Ghidra — becomes a tool an agent can call.</p>
+        </div>
+      </article>
+
+      <article class="chapter">
+        <div class="chapter__label">
+          <span class="chapter__num">1.3</span>
+          <h2 data-lines><span class="line-mask"><span>The Tools</span></span><span class="line-mask"><span class="muted">Behind Each Agent</span></span></h2>
+        </div>
+        <div class="chapter__body" data-reveal>
+          <div class="lib-table tech-table" role="table" aria-label="Technology categories">
+            <div class="lib-row lib-row--head" role="row"><span role="columnheader">Category</span><span role="columnheader">Tools</span><span role="columnheader">Use</span></div>
+            <div class="lib-row" role="row"><span role="cell">Reverse Engineering</span><span role="cell" class="lib-row__family">Ghidra, IDA Pro, Binary Ninja, x64dbg</span><span role="cell" class="lib-row__family">Trace control flow in compiled code</span></div>
+            <div class="lib-row" role="row"><span role="cell">PE Header Analysis</span><span role="cell" class="lib-row__family">PeStudio, PEview, LIEF</span><span role="cell" class="lib-row__family">Structural anomalies, entropy, timestamps</span></div>
+            <div class="lib-row" role="row"><span role="cell">Dependency &amp; API</span><span role="cell" class="lib-row__family">Dependency Walker, PE-bear</span><span role="cell" class="lib-row__family">Imports and exports mapped to capabilities</span></div>
+            <div class="lib-row" role="row"><span role="cell">String Extraction</span><span role="cell" class="lib-row__family">Sysinternals Strings, FLOSS</span><span role="cell" class="lib-row__family">Hidden text, endpoints, stack strings</span></div>
+            <div class="lib-row" role="row"><span role="cell">Pattern Matching</span><span role="cell" class="lib-row__family">YARA, ssdeep, ImpHash</span><span role="cell" class="lib-row__family">Family classification, fuzzy similarity</span></div>
+            <div class="lib-row" role="row"><span role="cell">Threat Intelligence</span><span role="cell" class="lib-row__family">VirusTotal, Hybrid Analysis, OTX</span><span role="cell" class="lib-row__family">Existing detections and reputation</span></div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <section class="statement" aria-label="Statement">
+      <p class="statement__text" data-lines>
+        <span class="line-mask"><span>Structured evidence,</span></span>
+        <span class="line-mask"><span>not a vague model output.</span></span>
+      </p>
+    </section>
+
+    <div class="story" style="padding-top:120px">
+      <article class="chapter">
+        <div class="chapter__label">
+          <span class="chapter__num">2.1</span>
+          <h2 data-lines><span class="line-mask"><span>How an Agent</span></span><span class="line-mask"><span class="muted">Thinks</span></span></h2>
+        </div>
+        <div class="chapter__body" data-reveal>
+          <p>Every agent follows the same loop. The model chooses a tool from the task and the evidence so far; the call is validated with Pydantic; the quarantined sample is loaded and a parser runs. Only the parser's structured output moves forward.</p>
+          <div class="flow">
+            <div class="flow__row"><span class="flow__node">LLM / Triage Agent</span><span class="flow__arrow"></span><span class="flow__text">Chooses an available tool from the task and evidence</span></div>
+            <div class="flow__row"><span class="flow__node flow__node--diamond">Tool Calling</span><span class="flow__arrow"></span><span class="flow__text">Validates input with Pydantic, loads the quarantined sample, invokes a parser</span></div>
+            <div class="flow__row"><span class="flow__node">Structured Evidence</span><span class="flow__arrow"></span><span class="flow__text">Typed facts handed to the next agent</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="chapter">
+        <div class="chapter__label">
+          <span class="chapter__num">2.2</span>
+          <h2 data-lines><span class="line-mask"><span>Five Agents,</span></span><span class="line-mask"><span class="muted">In Order</span></span></h2>
+        </div>
+        <div class="chapter__body" data-reveal>
+          <ol class="agent-list" id="agent-list" style="margin-top:4px"></ol>
+        </div>
+      </article>
+
+      <article class="chapter">
+        <div class="chapter__label">
+          <span class="chapter__num">3.1</span>
+          <h2 data-lines><span class="line-mask"><span>Built for</span></span><span class="line-mask"><span class="muted">Production</span></span></h2>
+        </div>
+        <div class="chapter__body" data-reveal>
+          <p>The platform runs as a conventional, observable backend. Requests pass through a reverse proxy to a FastAPI service; heavy analysis runs in background workers.</p>
+          <div class="arch">
+            <div class="arch__step"><span>Client</span><span>Browser · mobile · another service</span></div>
+            <div class="arch__step"><span>Reverse Proxy</span><span>Nginx / Caddy</span></div>
+            <div class="arch__step"><span>App Server</span><span>Uvicorn</span></div>
+            <div class="arch__step"><span>Web Framework</span><span>FastAPI + Pydantic</span></div>
+            <div class="arch__step"><span>Service Layer</span><span>Five-agent orchestration</span></div>
+          </div>
+          <div class="arch__grid">
+            <div class="arch__cell"><b>Database</b>PostgreSQL · SQLAlchemy · Alembic</div>
+            <div class="arch__cell"><b>Cache / Queue</b>Redis</div>
+            <div class="arch__cell"><b>Background Jobs</b>Celery / ARQ</div>
+          </div>
+          <p style="margin-top:16px;font-size:var(--fs-label);color:var(--on-surface-muted)">Around everything: testing · Docker · CI/CD · logging · security.</p>
+        </div>
+      </article>
+
+      <article class="chapter">
+        <div class="chapter__label">
+          <span class="chapter__num">3.2</span>
+          <h2 data-lines><span class="line-mask"><span>Take the Verdict</span></span><span class="line-mask"><span class="muted">into Your Report</span></span></h2>
+        </div>
+        <div class="chapter__body" data-reveal>
+          <p>The Explainability Agent verifies every fact once, then publishes an attack graph you can click through and a PDF you can hand to your team. Every node links back to the evidence that supports it.</p>
+          <div class="landing__cta" style="justify-content:flex-start;margin-top:20px">
+            <a class="glass-cta" data-emph="primary" href="analyse.html" data-swap="Analyse a Sample">Analyse a Sample</a>
+            <a class="glass-cta" href="report.html" data-swap="See an Attack Graph">See an Attack Graph</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer data-footer></footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/vortex.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/about.js"></script>
+</body>
+</html>

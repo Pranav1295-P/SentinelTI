@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sentinelti-frontend",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        ".claude/serve_frontend.py",
+        "5173"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "sentinelti-api",
+      "runtimeExecutable": ".venv/bin/uvicorn",
+      "runtimeArgs": [
+        "app.main:app",
+        "--port",
+        "8020",
+        "--reload",
+        "--reload-dir",
+        "app"
+      ],
+      "port": 8020
+    }
+  ]
+}

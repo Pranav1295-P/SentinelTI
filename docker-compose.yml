@@ -1,0 +1,131 @@
+# Infrastructure only:  docker compose up -d postgres redis neo4j
+# Everything:           docker compose up --build   (site on http://localhost:8080)
+
+x-app: &app
+  build: .
+  env_file: .env
+  environment: &app-env
+    DATABASE_URL_ASYNC: postgresql+asyncpg://mpuser:mppass@postgres:5432/malware_platform
+    DATABASE_URL_SYNC: postgresql+psycopg://mpuser:mppass@postgres:5432/malware_platform
+    REDIS_URL: redis://redis:6379/0
+    CELERY_BROKER_URL: redis://redis:6379/1
+    CELERY_RESULT_BACKEND: redis://redis:6379/2
+    NEO4J_URI: bolt://neo4j:7687
+    STORAGE_PATH: /data/storage
+  volumes:
+    - samples:/data/storage
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mp_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mpuser
+      POSTGRES_PASSWORD: mppass
+      POSTGRES_DB: malware_platform
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mpuser -d malware_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mp_redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: mp_neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:7687:7687"
+      - "127.0.0.1:7474:7474"
+    volumes:
+      - neo4jdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  api:
+    <<: *app
+    container_name: mp_api
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"
+    environment:
+      <<: *app-env
+      ENVIRONMENT: production
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  # Handles hostile files, so it runs with the least privilege Docker offers.
+  worker:
+    <<: *app
+    container_name: mp_worker
+    command: celery -A app.workers.celery_app worker --loglevel=INFO --concurrency=2
+    environment:
+      <<: *app-env
+      ENVIRONMENT: production
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 4g
+    depends_on:
+      api:
+        condition: service_healthy
+      neo4j:
+        condition: service_started
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: mp_caddy
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./frontend:/srv:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
+  neo4jdata:
+  samples:

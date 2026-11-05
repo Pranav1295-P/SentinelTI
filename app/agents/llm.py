@@ -15,7 +15,8 @@ def _build_model() -> BaseChatModel:
         settings.llm_model,
         api_key=settings.llm_api_key.get_secret_value(),
         timeout=settings.llm_timeout_seconds,
-        max_retries=2,
+        max_retries=settings.llm_max_retries,
+        max_tokens=settings.llm_max_output_tokens,
     )
 
 

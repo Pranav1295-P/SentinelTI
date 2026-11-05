@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     llm_model: str = "anthropic:claude-opus-5-5"
     llm_api_key: SecretStr = SecretStr("")
     llm_timeout_seconds: int = 90
+    # Free tiers rate-limit by tokens per minute, so calls wait and retry rather than fail.
+    llm_max_retries: int = 6
+    llm_max_output_tokens: int = 4096
     agent_max_tool_rounds: int = 6
 
     # Threat intel. Only ever sent the sample's hash, never the file.

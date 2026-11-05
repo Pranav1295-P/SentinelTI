@@ -18,7 +18,7 @@ class _Answer(BaseModel):
     evidence_ids: list[str] = Field(default_factory=list, description="Fact ids relied on.")
 
 
-def _rule_answer(row: Analysis, question: str) -> tuple[str, list[str]]:
+def _rule_answer(row: Analysis, question: str, llm_failed: bool = False) -> tuple[str, list[str]]:
     result = row.result or {}
     assessment = result.get("assessment") or {}
     iocs = result.get("iocs") or {}
@@ -39,8 +39,10 @@ def _rule_answer(row: Analysis, question: str) -> tuple[str, list[str]]:
             return f"{row.filename} scored {row.risk}: no capability, packer, rule hit or disguise was proven.", []
         reasons = "; ".join(f"{i['reason']} (+{i['points']})" for i in items)
         return f"{row.filename} scored {row.risk} because: {reasons}.", [e for i in items for e in i["evidence_ids"]][:10]
-    return ("Free-form answers need an LLM key, which is not configured yet. "
-            "I can already explain the verdict, list indicators, show hashes or list ATT&CK techniques."), []
+    capabilities = "I can still explain the verdict, list indicators, show hashes or list ATT&CK techniques."
+    if llm_failed:
+        return f"The LLM could not answer that just now, so please try again shortly. {capabilities}", []
+    return f"Free-form answers need an LLM key, which is not configured yet. {capabilities}", []
 
 
 async def answer_question(row: Analysis, question: str) -> dict:
@@ -50,7 +52,7 @@ async def answer_question(row: Analysis, question: str) -> dict:
         return {"answer": answer, "evidence_ids": ids, "mode": "rules"}
 
     result = row.result or {}
-    facts = {f["id"]: f for f in result.get("facts", []) if f.get("verified")}
+    facts = {f["id"]: f for f in result.get("facts", []) if f.get("verified") and f["kind"] != "note"}
     evidence = {
         "file": row.filename, "verdict": row.verdict, "risk": row.risk, "family": row.family,
         "score_breakdown": (result.get("assessment") or {}).get("breakdown"),
@@ -59,14 +61,23 @@ async def answer_question(row: Analysis, question: str) -> dict:
         "iocs": result.get("iocs"),
         "facts": [{"id": f["id"], "title": f["title"], "detail": f["detail"][:160]} for f in facts.values()][:150],
     }
+    messages = [
+        SystemMessage(AGENT_PROMPTS["chat"]),
+        HumanMessage("Evidence for this analysis:\n" + untrusted(evidence, 20000)),
+        HumanMessage(f"Analyst question: {question}"),
+    ]
     try:
-        reply: _Answer = await llm.with_structured_output(_Answer).ainvoke([
-            SystemMessage(AGENT_PROMPTS["chat"]),
-            HumanMessage("Evidence for this analysis:\n" + untrusted(evidence, 20000)),
-            HumanMessage(f"Analyst question: {question}"),
-        ])
+        reply: _Answer = await llm.with_structured_output(_Answer).ainvoke(messages)
     except Exception:
-        logger.warning("Chat LLM call failed", exc_info=True)
-        answer, ids = _rule_answer(row, question)
+        # A model that refuses often skips the structured format, and the provider rejects that.
+        # Asking again in plain text returns the refusal itself, without citations.
+        logger.warning("Structured chat answer failed, retrying as plain text", exc_info=True)
+        try:
+            plain = await llm.ainvoke(messages)
+            if plain.text.strip():
+                return {"answer": plain.text.strip(), "evidence_ids": [], "mode": "llm"}
+        except Exception:
+            logger.warning("Plain chat answer failed", exc_info=True)
+        answer, ids = _rule_answer(row, question, llm_failed=True)
         return {"answer": answer, "evidence_ids": ids, "mode": "rules"}
     return {"answer": reply.answer, "evidence_ids": [i for i in reply.evidence_ids if i in facts], "mode": "llm"}

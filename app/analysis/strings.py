@@ -64,7 +64,11 @@ def _public_ip(text: str) -> bool:
 
 def _looks_like_version(text: str) -> bool:
     """Assembly versions (1.0.0.0) and certificate ids look like addresses when standing alone."""
-    return text.startswith(_OID_PREFIXES) or text.split(":")[0].endswith(".0")
+    address = text.split(":")[0]
+    if ":" in text:  # A port number means this really is an address.
+        return False
+    first, second = address.split(".")[:2]
+    return text.startswith(_OID_PREFIXES) or address.endswith(".0") or (int(first) <= 3 and int(second) <= 9)
 
 
 def is_benign_host(host: str) -> bool:

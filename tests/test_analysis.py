@@ -94,6 +94,17 @@ def test_iocs_ignore_versions_oids_and_private_addresses():
     assert not any(ip.startswith(("1.2.3", "2.5.4")) for ip in iocs["ips"])
 
 
+def test_short_version_numbers_are_not_ips():
+    assert strs.extract_iocs(["1.1.0.14", "2.0.1.3"])["ips"] == []
+    assert strs.extract_iocs(["5.8.18.7", "1.1.1.1:53"])["ips"] == ["5.8.18.7", "1.1.1.1:53"]
+
+
+def test_few_otx_pulses_are_a_weak_signal():
+    weak = scoring.score({"reputation": {"otx": {"pulse_count": 2}}})
+    strong = scoring.score({"reputation": {"otx": {"pulse_count": 50}}})
+    assert weak["risk"] == 3 and strong["risk"] == 10
+
+
 def test_short_noise_is_not_a_domain():
     assert strs.extract_iocs(["xx v4.cc yy"])["domains"] == []
     assert strs.extract_iocs(["beacon to evil-host.top now"])["domains"] == ["evil-host.top"]

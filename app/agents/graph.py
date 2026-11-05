@@ -29,6 +29,8 @@ from app.services.events import emit
 
 logger = logging.getLogger(__name__)
 MAX_NARRATIVE_ATTEMPTS = 2
+# Section facts are too noisy to list. Notes are general references, not evidence about this file.
+NOT_CITABLE = {"section", "note"}
 
 TRIAGE = AgentSpec("triage", "Triage Agent", (T.identify_file_type, T.compute_file_hashes, T.check_file_size),
                    required=("identify_file_type", "compute_file_hashes", "check_file_size"))
@@ -135,17 +137,17 @@ def _write_hypotheses(state: AnalysisState, capabilities: list[dict], facts: dic
     llm = get_llm()
     if not llm:
         return hypotheses, []
-    listing = [{"id": f["id"], "title": f["title"]} for f in facts.values() if f["kind"] != "section"][:120]
+    listing = [{"id": f["id"], "title": f["title"]} for f in facts.values() if f["kind"] not in NOT_CITABLE][:120]
     try:
         reply: HypothesisList = llm.with_structured_output(HypothesisList).invoke([
             SystemMessage(AGENT_PROMPTS["hypotheses"]),
-            HumanMessage("Available evidence:\n" + untrusted({"facts": listing, "capabilities": [c["id"] for c in capabilities]}, 12000)),
+            HumanMessage("Available evidence:\n" + untrusted({"facts": listing, "capabilities": [{"name": c["name"], "status": c["status"]} for c in capabilities]}, 12000)),
         ])
     except Exception as exc:
         logger.warning("Hypothesis call failed", exc_info=True)
         return hypotheses, [f"Behaviour Hypothesis Agent: LLM unavailable ({type(exc).__name__})"]
     for item in reply.hypotheses:
-        cited = [i for i in item.evidence_ids if i in facts]
+        cited = [i for i in item.evidence_ids if i in facts and facts[i]["kind"] not in NOT_CITABLE]
         if cited:  # A hypothesis with no real citation is discarded.
             hypotheses.append({"statement": item.statement, "evidence_ids": cited, "confidence": item.confidence, "source": "llm"})
     return hypotheses, []
@@ -172,16 +174,17 @@ def behaviour_node(state: AnalysisState) -> dict:
 def context_node(state: AnalysisState) -> dict:
     capabilities = state.get("capabilities", [])
     proven = [c["name"] for c in capabilities if c["status"] == "proven"]
-    query = " ".join(proven) or (state["triage"]["label"] + " static analysis")
-    spec = AgentSpec("context", "Threat Context Agent", CONTEXT_TOOLS,
-                     required=("map_attack_techniques", "search_threat_notes", "lookup_hash_reputation"),
-                     default_args={"search_threat_notes": {"query": query[:200]}})
+    # With nothing proven there is nothing to look up, and a search would only attach unrelated notes.
+    tools = CONTEXT_TOOLS if proven else tuple(t for t in CONTEXT_TOOLS if t is not T.search_threat_notes)
+    spec = AgentSpec("context", "Threat Context Agent", tools,
+                     required=tuple(t.name for t in tools),
+                     default_args={"search_threat_notes": {"query": " ".join(proven)[:200]}})
     run = run_agent(spec, _ctx(state), "Add threat context to these findings.\n" + untrusted({"proven_capabilities": proven}))
     out = run["outputs"]
     techniques = out["map_attack_techniques"]["techniques"]
     return {
         "techniques": techniques,
-        "notes": out["search_threat_notes"]["notes"],
+        "notes": out.get("search_threat_notes", {}).get("notes", []),
         "reputation": out["lookup_hash_reputation"],
         **_finish(state, "context", spec.name, run, "Mapped"),
     }
@@ -230,7 +233,7 @@ def narrate_node(state: AnalysisState) -> dict:
         return {"narrative": fallback_narrative(state), "narrative_attempts": attempts, "narrative_feedback": ""}
 
     facts = state["facts"]
-    verified = [{"id": f["id"], "title": f["title"], "detail": f["detail"][:200]} for f in facts.values() if f.get("verified") and f["kind"] != "section"][:120]
+    verified = [{"id": f["id"], "title": f["title"], "detail": f["detail"][:200]} for f in facts.values() if f.get("verified") and f["kind"] not in NOT_CITABLE][:120]
     payload = {
         "verdict": state["assessment"]["verdict"], "risk": state["assessment"]["risk"], "family": state.get("family"),
         "score_breakdown": state["assessment"]["breakdown"],

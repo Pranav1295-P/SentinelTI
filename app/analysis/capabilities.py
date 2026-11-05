@@ -64,7 +64,7 @@ RULES: tuple[Rule, ...] = (
     Rule("raw_socket", "Raw Socket Communication", 4, ("T1095",),
          "Opens raw network sockets.",
          apis=(("WSAStartup", "socket", "WSASocket"), ("connect", "WSAConnect"), ("send", "WSASend"))),
-    Rule("downloader", "Downloads and Runs Payloads", 15, ("T1105",),
+    Rule("downloader", "Downloads Files From the Internet", 15, ("T1105",),
          "Downloads files from the internet to disk.",
          apis=(("URLDownloadToFile", "URLDownloadToCacheFile", "BITSAdmin"),)),
     Rule("ransomware_impact", "File Encryption for Impact", 30, ("T1486",),

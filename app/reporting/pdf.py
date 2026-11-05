@@ -148,7 +148,7 @@ def _build_story(state: dict) -> list:
 
     notes = state.get("notes") or []
     if notes:
-        story += [Paragraph("Internal threat notes", H2)]
+        story += [Paragraph("Internal threat notes", H2), Paragraph("General references on these techniques, not findings about this file.", SMALL)]
         for note in notes:
             story += [Paragraph(f"<b>{text(note['title'])}</b>", BODY), Paragraph(text(note["excerpt"]), CELL), Spacer(1, 4)]
 

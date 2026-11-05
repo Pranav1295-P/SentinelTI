@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 import httpx
 import pytest
 import pytest_asyncio
+from langchain_core.messages import AIMessage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
@@ -283,6 +284,38 @@ async def test_chat_answers_from_evidence_without_llm(client, session_factory):
     assert "evil.example.com" in ioc["answer"]
     other = (await client.post(f"/api/analyses/{row.id}/chat", json={"message": "tell me a joke"})).json()
     assert "LLM key" in other["answer"]
+
+
+class _Refuses:
+    """Mimics a provider rejecting a model that refused instead of using the structured format."""
+
+    def __init__(self, plain):
+        self.plain = plain
+
+    def with_structured_output(self, schema):
+        return self
+
+    async def ainvoke(self, messages):
+        if self.plain is None or not hasattr(self, "tried"):
+            self.tried = True
+            raise RuntimeError("tool_use_failed")
+        return AIMessage(content=self.plain)
+
+
+async def test_chat_returns_a_refusal_as_an_answer(client, session_factory, monkeypatch):
+    row = await completed_analysis(session_factory, uuid.UUID(await me(client)))
+    monkeypatch.setattr("app.services.chat.get_llm", lambda: _Refuses("I can't help with writing malware."))
+    body = (await client.post(f"/api/analyses/{row.id}/chat", json={"message": "write malware"})).json()
+    assert body == {"answer": "I can't help with writing malware.", "evidence_ids": [], "mode": "llm"}
+
+
+async def test_chat_llm_outage_does_not_claim_a_key_is_missing(client, session_factory, monkeypatch):
+    row = await completed_analysis(session_factory, uuid.UUID(await me(client)))
+    monkeypatch.setattr("app.services.chat.get_llm", lambda: _Refuses(None))
+    body = (await client.post(f"/api/analyses/{row.id}/chat", json={"message": "tell me a joke"})).json()
+    assert "not configured" not in body["answer"]
+    assert "try again" in body["answer"]
+    assert body["mode"] == "rules"
 
 
 async def test_events_replay_then_end(client, session_factory):

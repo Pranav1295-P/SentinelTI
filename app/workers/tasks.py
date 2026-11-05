@@ -4,6 +4,7 @@ import logging
 import uuid
 from datetime import UTC, datetime
 
+from langchain_core.callbacks import get_usage_metadata_callback
 from langgraph.checkpoint.postgres import PostgresSaver
 
 from app.agents.graph import build_pipeline
@@ -44,7 +45,12 @@ def agent_signals(state: dict) -> list[float]:
     return [round(v, 2) for v in (first, second, third, fourth, risk / 100)]
 
 
-def apply_result(row: Analysis, state: dict) -> None:
+def total_usage(usage_by_model: dict) -> dict:
+    """Tokens this run spent, so free-tier limits and costs can be planned from real numbers."""
+    return {key: sum(u.get(key, 0) for u in usage_by_model.values()) for key in ("input_tokens", "output_tokens", "total_tokens")}
+
+
+def apply_result(row: Analysis, state: dict, llm_usage: dict | None = None) -> None:
     assessment = state["assessment"]
     row.status = AnalysisStatus.completed.value
     row.verdict = assessment["verdict"]
@@ -59,6 +65,7 @@ def apply_result(row: Analysis, state: dict) -> None:
         **{key: state.get(key) for key in RESULT_KEYS},
         "facts": list(state["facts"].values()),
         "signals": agent_signals(state),
+        "llm_usage": llm_usage or {},
     }
     row.completed_at = datetime.now(UTC)
 
@@ -100,10 +107,10 @@ def run_analysis(self, analysis_id: str) -> str:
         logger.info("Analysis started", extra=log)
 
         try:
-            with PostgresSaver.from_conn_string(_checkpoint_url()) as checkpointer:
+            with PostgresSaver.from_conn_string(_checkpoint_url()) as checkpointer, get_usage_metadata_callback() as usage:
                 checkpointer.setup()
                 state = run_pipeline(row, checkpointer)
-            apply_result(row, state)
+            apply_result(row, state, total_usage(usage.usage_metadata))
             session.commit()
             emit(analysis_id, "analysis_completed", verdict=row.verdict, tone=row.tone, risk=row.risk,
                  family=row.family, llm_mode=row.llm_mode)

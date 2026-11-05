@@ -52,8 +52,10 @@ def score(state: dict) -> dict:
     if malicious:
         add(60 if malicious >= 20 else 35 if malicious >= 5 else 10,
             f"VirusTotal: {malicious} engines flag this hash", ["reputation:virustotal"])
-    if (reputation.get("otx") or {}).get("pulse_count"):
-        add(10, "AlienVault OTX: hash appears in threat pulses", ["reputation:otx"])
+    pulses = (reputation.get("otx") or {}).get("pulse_count") or 0
+    if pulses:
+        # Community pulses also mention harmless files, so one or two prove little.
+        add(10 if pulses >= 5 else 3, f"AlienVault OTX: hash appears in {pulses} threat pulses", ["reputation:otx"])
 
     risk = max(0, min(100, sum(item["points"] for item in breakdown)))
     verdict, tone = verdict_for(risk)

@@ -16,10 +16,12 @@ from pypdf import PdfReader
 
 from app.agents.graph import build_pipeline
 from app.agents.verify import verify_facts
+from app.analysis.capabilities import RULES
 from app.core.config import settings
 from app.schemas.evidence import Hypothesis, HypothesisList, Narrative, NarrativePoint
 from app.services.events import stream_key
 from app.services.storage import quarantine_path
+from app.workers.tasks import total_usage
 from tests.factory import build_pe
 
 
@@ -155,6 +157,17 @@ def test_progress_events_are_emitted_in_order(malicious_pe, isolated_environment
     assert any(e["type"] == "tool_result" and e["agent"] == "evidence" for e in events)
 
 
+def test_total_usage_adds_up_across_models():
+    usage = {"a": {"input_tokens": 10, "output_tokens": 2, "total_tokens": 12}, "b": {"input_tokens": 5, "output_tokens": 1, "total_tokens": 6}}
+    assert total_usage(usage) == {"input_tokens": 15, "output_tokens": 3, "total_tokens": 18}
+    assert total_usage({}) == {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+
+
+def test_downloader_rule_does_not_claim_execution():
+    rule = next(r for r in RULES if r.id == "downloader")
+    assert "run" not in rule.name.lower() and "exec" not in rule.name.lower()
+
+
 def test_llm_cannot_skip_required_tools(monkeypatch, malicious_pe):
     use_model(monkeypatch, ScriptedModel(replies=[AIMessage(content="Looks fine, nothing to do.")], structured=[], seen=[]))
     state = run(malicious_pe)
@@ -197,6 +210,24 @@ def test_llm_cannot_change_the_verdict_or_invent_evidence(monkeypatch, malicious
     assert state["assessment"]["verdict"] == "Critical"
     assert not any("safe" in point["text"] for point in state["narrative"]["summary"])
     assert state["narrative_attempts"] == 2
+
+
+def test_general_notes_cannot_be_cited_as_evidence_about_the_sample(monkeypatch, malicious_pe):
+    note_id = next(i for i in run(malicious_pe)["facts"] if i.startswith("note:"))
+    point = NarrativePoint(text="The notes say it is packed.", evidence_ids=[note_id])
+    real = NarrativePoint(text="It can inject into other processes.", evidence_ids=["import:VirtualAllocEx"])
+    hypothesis = HypothesisList(hypotheses=[Hypothesis(statement="It may be packed.", evidence_ids=[note_id], confidence=0.5)])
+    use_model(monkeypatch, ScriptedModel(replies=[], structured=[hypothesis, Narrative(summary=[point, real]), Narrative(summary=[point, real])], seen=[]))
+    state = run(malicious_pe)
+    assert note_id in state["facts"]
+    assert [p["text"] for p in state["narrative"]["summary"]] == ["It can inject into other processes."]
+    assert "It may be packed." not in [h["statement"] for h in state["hypotheses"]]
+
+
+def test_no_notes_are_attached_when_nothing_is_proven(tmp_path):
+    path = tmp_path / "notes.txt"
+    path.write_bytes(b"just some notes about the meeting\n" * 10)
+    assert run(path)["notes"] == []
 
 
 def test_uncited_sentence_triggers_one_retry_then_is_removed(monkeypatch, malicious_pe):

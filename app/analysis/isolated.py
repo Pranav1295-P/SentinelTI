@@ -38,5 +38,9 @@ def parse_binary(path: Path) -> dict:
     return _run("pe", str(path))
 
 
+def unzip(path: Path, out_dir: Path) -> dict:
+    return _run("unzip", str(path), str(out_dir), str(settings.max_upload_bytes))
+
+
 def scan_yara(path: Path, rules_dir: Path = RULES_DIR) -> dict:
     return _run("yara", str(path), str(rules_dir))

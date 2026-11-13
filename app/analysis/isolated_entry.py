@@ -5,7 +5,7 @@ its own process with resource limits and an environment holding no secrets, so a
 parser crash or hang costs one tool call and never the worker. It must not import
 app.core.config.
 
-Usage: python -m app.analysis.isolated_entry {pe|yara} <file> [rules_dir]
+Usage: python -m app.analysis.isolated_entry {pe|yara|unzip} <file> [rules_dir | out_dir max_bytes]
 """
 
 import json
@@ -242,6 +242,80 @@ def command_yara(path: str, rules_dir: str) -> dict:
     return {"matches": matches, "rule_files": len(sources)}
 
 
+# Malware repositories publish samples in archives with these well-known passwords.
+ARCHIVE_PASSWORDS = (b"infected", b"malware", b"virus", b"password")
+MAX_ARCHIVE_MEMBERS = 64
+CHUNK = 1024 * 1024
+
+
+def _archive_password(archive, infos) -> tuple[bool, bytes | None]:
+    """Return (opened, password) by test-reading one encrypted member."""
+    probe = min((i for i in infos if i.flag_bits & 1), key=lambda i: i.compress_size, default=None)
+    if probe is None:
+        return True, None
+    for password in ARCHIVE_PASSWORDS:
+        archive.setpassword(password)
+        try:
+            with archive.open(probe) as handle:
+                handle.read(1)
+            return True, password
+        except (RuntimeError, ValueError, OSError):
+            continue
+        except Exception:  # noqa: S112  (each library error here just means "wrong password")
+            continue
+    return False, None
+
+
+def command_unzip(path: str, out_dir: str, max_bytes: str) -> dict:
+    """Extract members to numbered files. Names from the archive never touch the filesystem."""
+    import hashlib
+
+    import pyzipper
+
+    limit = int(max_bytes)
+    resource.setrlimit(resource.RLIMIT_FSIZE, (limit + CHUNK, limit + CHUNK))
+    with pyzipper.AESZipFile(path) as archive:
+        infos = [i for i in archive.infolist() if not i.is_dir()]
+        names = {i.filename for i in infos}
+        if "[Content_Types].xml" in names:
+            macros = any(n.lower().endswith("vbaproject.bin") for n in names)
+            return {"status": "document", "macros": macros, "member_count": len(infos)}
+
+        opened, password = _archive_password(archive, infos)
+        if not opened:
+            return {"status": "locked", "member_count": len(infos)}
+
+        members, skipped, total = [], 0, 0
+        for index, info in enumerate(infos[:MAX_ARCHIVE_MEMBERS]):
+            target = Path(out_dir) / f"{index}.bin"
+            digest = hashlib.sha256()
+            size = 0
+            head = b""
+            try:
+                with archive.open(info) as source, target.open("wb") as sink:
+                    while chunk := source.read(CHUNK):
+                        size += len(chunk)
+                        total += len(chunk)
+                        # Checked on real output, so a zip bomb stops here whatever its headers claim.
+                        if size > limit or total > limit * 4:
+                            raise OverflowError
+                        if not head:
+                            head = chunk[:8]
+                        digest.update(chunk)
+                        sink.write(chunk)
+            except Exception:
+                target.unlink(missing_ok=True)
+                skipped += 1
+                continue
+            if size == 0:
+                target.unlink(missing_ok=True)
+                continue
+            members.append({"file": target.name, "name": info.filename[-255:], "size": size, "sha256": digest.hexdigest(), "head": head.hex()})
+    skipped += max(0, len(infos) - MAX_ARCHIVE_MEMBERS)
+    return {"status": "extracted", "members": members, "skipped": skipped, "encrypted": password is not None,
+            "password": password.decode() if password else None}
+
+
 def main() -> None:
     apply_limits()
     command, path = sys.argv[1], sys.argv[2]
@@ -250,6 +324,8 @@ def main() -> None:
             output = command_pe(path)
         elif command == "yara":
             output = command_yara(path, sys.argv[3])
+        elif command == "unzip":
+            output = command_unzip(path, sys.argv[3], sys.argv[4])
         else:
             raise ValueError(f"unknown command {command}")
     except Exception as exc:  # A hostile file may break any parser; report it as data.

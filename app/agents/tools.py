@@ -236,14 +236,10 @@ def correlate_capabilities(state: State) -> tuple[str, dict]:
         })
 
     anomalies = parsed.get("anomalies", [])
-    packing = [a for a in anomalies if a["code"].split(":")[0] in ("packer_section", "high_entropy", "empty_raw")]
     triage = ctx.get("triage") or {}
-    if any(a["code"] == "packer_section" for a in packing) or len(packing) >= 2:
-        capabilities.append({
-            "id": "software_packing", "name": "Software Packing", "status": "proven", "confidence": 0.9, "weight": 15,
-            "techniques": ["T1027.002"], "evidence_ids": [f"anomaly:{a['code']}" for a in packing],
-            "explanation": "Compressed or encrypted sections hide the real code until runtime.",
-        })
+    packing = caps.packing_capability(anomalies)
+    if packing:
+        capabilities.append(packing)
     if triage.get("disguised"):
         # Already scored by triage, so this one only supplies the ATT&CK mapping.
         capabilities.append({

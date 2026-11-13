@@ -185,5 +185,26 @@ def correlate(parsed: dict, strings: list[str]) -> list[dict]:
     return results
 
 
+def packing_capability(anomalies: list[dict]) -> dict | None:
+    """Packed or encrypted code, judged from section anomalies. No reputation data is needed."""
+    packed = [a for a in anomalies if a["code"].split(":")[0] in ("packer_section", "high_entropy", "empty_raw")]
+    if not packed:
+        return None
+    named_packer = any(a["code"] == "packer_section" for a in packed)
+    hides_imports = [a for a in anomalies if a["code"] in ("few_imports", "no_imports")]
+    self_modifying = [a for a in anomalies if a["code"].startswith("rwx:")]
+    # High entropy alone can be an embedded image or archive, so it needs a second sign.
+    if not (named_packer or len(packed) >= 2 or hides_imports or self_modifying):
+        return None
+    loader_stub = bool(hides_imports and self_modifying)
+    evidence = [*packed, *hides_imports, *self_modifying]
+    return {
+        "id": "software_packing", "name": "Software Packing", "status": "proven", "confidence": .95 if loader_stub else .9,
+        "weight": 25 if loader_stub else 15, "techniques": ["T1027.002"], "evidence_ids": [f"anomaly:{a['code']}" for a in evidence],
+        "explanation": "Compressed or encrypted code with almost no visible imports, the shape of a loader hiding its real payload."
+        if loader_stub else "Compressed or encrypted sections hide the real code until runtime.",
+    }
+
+
 def find_prompt_injection(strings: list[str]) -> list[str]:
     return [s[:256] for s in strings if PROMPT_INJECTION.search(s)][:10]

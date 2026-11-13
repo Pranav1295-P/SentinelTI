@@ -19,7 +19,7 @@ from app.workers.celery_app import celery_app
 logger = logging.getLogger(__name__)
 
 RESULT_KEYS = (
-    "triage", "parsed", "yara", "iocs", "string_count", "decoded_strings", "capabilities", "hypotheses",
+    "container", "triage", "parsed", "yara", "iocs", "string_count", "decoded_strings", "capabilities", "hypotheses",
     "techniques", "notes", "reputation", "verification", "assessment", "narrative", "related", "warnings", "trace",
 )
 
@@ -52,6 +52,10 @@ def total_usage(usage_by_model: dict) -> dict:
 
 def apply_result(row: Analysis, state: dict, llm_usage: dict | None = None) -> None:
     assessment = state["assessment"]
+    # When an archive was opened, this analysis is now about the sample inside it.
+    row.filename = state["filename"][:255]
+    row.sha256 = state["expected_sha256"]
+    row.size_bytes = state["triage"]["size_bytes"]
     row.status = AnalysisStatus.completed.value
     row.verdict = assessment["verdict"]
     row.tone = assessment["tone"]
@@ -111,7 +115,14 @@ def run_analysis(self, analysis_id: str) -> str:
                 checkpointer.setup()
                 state = run_pipeline(row, checkpointer)
             apply_result(row, state, total_usage(usage.usage_metadata))
+            children = [
+                Analysis(owner_id=row.owner_id, filename=m["name"][:255], sha256=m["sha256"], size_bytes=m["size"])
+                for m in state.get("extra_members") or []
+            ]
+            session.add_all(children)
             session.commit()
+            for child in children:
+                run_analysis.delay(str(child.id))
             emit(analysis_id, "analysis_completed", verdict=row.verdict, tone=row.tone, risk=row.risk,
                  family=row.family, llm_mode=row.llm_mode)
             logger.info("Analysis completed", extra=log)

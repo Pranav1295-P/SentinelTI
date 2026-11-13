@@ -45,7 +45,8 @@ def build_evidence_graph(state: dict) -> dict:
     nodes.append(_node(
         "sample", state["filename"], "sample", "Sample", state["filename"],
         [("Type", triage["label"]), ("SHA-256", triage["sha256"]), ("Size", _human_size(triage["size_bytes"])),
-         ("Entropy", triage["entropy"]), ("Compiled", parsed.get("compile_timestamp") or "n/a")],
+         ("Entropy", triage["entropy"]), ("Compiled", parsed.get("compile_timestamp") or "n/a"),
+         *([("Unpacked from", state["container"]["filename"])] if (state.get("container") or {}).get("filename") else [])],
         f"Rated {assessment['verdict']} with risk {assessment['risk']}. Every fact was checked against the file by the Explainability Agent.",
     ))
 

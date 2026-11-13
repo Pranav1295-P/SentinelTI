@@ -96,6 +96,8 @@ def _build_story(state: dict) -> list:
         ("MD5", triage["md5"]), ("SHA-1", triage["sha1"]), ("SHA-256", triage["sha256"]), ("ssdeep", triage.get("ssdeep") or "n/a"),
         ("Import hash", parsed.get("imphash") or "n/a"), ("Compiled", parsed.get("compile_timestamp") or "n/a"),
     ]
+    if (state.get("container") or {}).get("filename"):
+        file_rows.insert(0, ("Unpacked from", state["container"]["filename"]))
     story += [Paragraph("File", H2), _table(
         [[Paragraph(text(k), CELL), Paragraph(text(v), MONO)] for k, v in file_rows], [28 * mm, width - 28 * mm])]
 

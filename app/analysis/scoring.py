@@ -21,6 +21,9 @@ def score(state: dict) -> dict:
             breakdown.append({"points": points, "reason": reason, "evidence_ids": evidence_ids or []})
 
     triage = state.get("triage") or {}
+    container = state.get("container") or {}
+    if container.get("macros"):
+        add(25, "Office document contains macros", ["file:macros"])
     if triage.get("disguised"):
         add(25, "File disguises its real type behind its name", ["file:disguised"])
     elif triage.get("extension_mismatch") and triage.get("is_executable"):
@@ -50,16 +53,30 @@ def score(state: dict) -> dict:
     vt = reputation.get("virustotal") or {}
     malicious = vt.get("malicious") or 0
     if malicious:
-        add(60 if malicious >= 20 else 35 if malicious >= 5 else 10,
+        add(80 if malicious >= 30 else 60 if malicious >= 10 else 35 if malicious >= 3 else 10,
             f"VirusTotal: {malicious} engines flag this hash", ["reputation:virustotal"])
     pulses = (reputation.get("otx") or {}).get("pulse_count") or 0
     if pulses:
         # Community pulses also mention harmless files, so one or two prove little.
         add(10 if pulses >= 5 else 3, f"AlienVault OTX: hash appears in {pulses} threat pulses", ["reputation:otx"])
 
+    # Finding nothing only means something if the contents could actually be read.
+    if sum(item["points"] for item in breakdown) < 20 and not inspected(state):
+        add(20, "Contents could not be inspected, so this file is not cleared", ["file:not-inspected"])
+        risk = max(0, min(100, sum(item["points"] for item in breakdown)))
+        return {"risk": risk, "verdict": "Inconclusive", "tone": "warn", "breakdown": breakdown}
+
     risk = max(0, min(100, sum(item["points"] for item in breakdown)))
     verdict, tone = verdict_for(risk)
     return {"risk": risk, "verdict": verdict, "tone": tone, "breakdown": breakdown}
+
+
+def inspected(state: dict) -> bool:
+    """False for locked or compressed containers, and for encrypted-looking blobs."""
+    triage = state.get("triage") or {}
+    if (state.get("container") or {}).get("opaque"):
+        return False
+    return not (triage.get("kind") == "DATA" and triage.get("entropy", 0) >= 7.2)
 
 
 def attribute_family(state: dict) -> str | None:

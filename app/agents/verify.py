@@ -29,7 +29,8 @@ def verify_facts(state: dict) -> tuple[dict[str, dict], list[dict], list[dict], 
     yara_hits = {m["rule"] for m in isolated.scan_yara(path).get("matches", [])}
     anomaly_codes = {a["code"] for a in parsed.get("anomalies", [])}
     file_truth = {"file:sha256", "file:type", "file:size", "file:disguised", "file:extension-mismatch",
-                  "file:high-entropy", "file:format", "file:imphash", "file:signature"}
+                  "file:high-entropy", "file:format", "file:imphash", "file:signature",
+                  "file:archive", "file:not-inspected", "file:macros"}
 
     facts: dict[str, dict] = {}
     checked = verified = failed = 0

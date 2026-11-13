@@ -20,7 +20,7 @@ from app.agents.llm import get_llm
 from app.agents.loop import AgentSpec, run_agent
 from app.agents.prompts import AGENT_PROMPTS, untrusted
 from app.agents.verify import verify_facts
-from app.analysis import scoring
+from app.analysis import archive, scoring
 from app.reporting.evidence_graph import build_evidence_graph
 from app.reporting.graph_store import sync_and_match
 from app.reporting.pdf import render_pdf
@@ -52,6 +52,8 @@ class AnalysisState(TypedDict, total=False):
     sample_path: str
     filename: str
     expected_sha256: str
+    container: dict[str, Any]
+    extra_members: list[dict]
 
     facts: Annotated[dict[str, dict], _merge_facts]
     warnings: Annotated[list[str], operator.add]
@@ -98,6 +100,40 @@ def _finish(state: AnalysisState, spec_id: str, name: str, run: dict, label: str
     }
 
 
+def _file_fact(fact_id: str, title: str, detail: str, severity: str = "info") -> dict:
+    return {"id": fact_id, "agent": "triage", "tool": "unpack_archive", "kind": "file", "title": title, "detail": detail,
+            "severity": severity, "literal": None, "data": {}}
+
+
+def unpack_node(state: AnalysisState) -> dict:
+    """Open containers first, so the agents and hash lookups see the real sample inside."""
+    outcome = archive.open_container(Path(state["sample_path"]), state["filename"])
+    if outcome is None:
+        return {"container": {}, "extra_members": []}
+
+    facts, lines = {}, []
+    update: dict = {"container": outcome["container"], "extra_members": outcome["extra"]}
+    container = outcome["container"]
+    if outcome["primary"]:
+        primary = outcome["primary"]
+        update.update(sample_path=primary["path"], filename=primary["name"], expected_sha256=primary["sha256"])
+        how = f"password '{container['password']}'" if container.get("password") else "no password"
+        line = f"Unpacked {container['filename']} ({how}) → analysing {primary['name']}"
+        if outcome["extra"]:
+            line += f" · {len(outcome['extra'])} more files queued"
+        lines.append(line)
+        facts["file:archive"] = _file_fact("file:archive", f"Unpacked from {container['filename']}", line)
+    if container.get("macros"):
+        facts["file:macros"] = _file_fact("file:macros", "Office document contains macros", "A vbaProject.bin stream is present.", "high")
+        lines.append("Office document contains macros")
+    if container.get("opaque"):
+        facts["file:not-inspected"] = _file_fact("file:not-inspected", "Contents could not be inspected", container["reason"], "medium")
+        lines.append(container["reason"])
+    for line in lines:
+        emit(state["analysis_id"], "tool_result", "triage", tool="unpack_archive", line=line)
+    return {**update, "facts": facts, "trace": [{"agent": "triage", "name": TRIAGE.name, "lines": lines, "label": "Validated", "tone": "ok"}] if lines else []}
+
+
 def triage_node(state: AnalysisState) -> dict:
     brief = "Triage this sample.\n" + untrusted({"submitted_filename": state["filename"]})
     run = run_agent(TRIAGE, _ctx(state), brief)
@@ -105,7 +141,12 @@ def triage_node(state: AnalysisState) -> dict:
     triage = {**out["identify_file_type"], **out["compute_file_hashes"], **out["check_file_size"]}
     if triage["sha256"] != state["expected_sha256"]:
         raise ValueError("quarantined file does not match its recorded SHA-256")
-    return {"triage": triage, **_finish(state, "triage", TRIAGE.name, run, "Validated")}
+    finished = _finish(state, "triage", TRIAGE.name, run, "Validated")
+    # A high-entropy blob with no known format may be encrypted; scoring needs a fact to cite.
+    if triage["kind"] == "DATA" and triage["entropy"] >= 7.2:
+        reason = "Unknown format with encrypted-looking content, so its contents could not be read."
+        finished["facts"]["file:not-inspected"] = _file_fact("file:not-inspected", "Contents could not be inspected", reason, "medium")
+    return {"triage": triage, **finished}
 
 
 def evidence_node(state: AnalysisState) -> dict:
@@ -220,6 +261,7 @@ def fallback_narrative(state: AnalysisState) -> dict:
         "Critical": ["Isolate any host that ran this file.", "Block the listed indicators.", "Search your fleet for this SHA-256."],
         "Malicious": ["Do not run this file outside an isolated lab.", "Block the listed indicators.", "Search your fleet for this SHA-256."],
         "Suspicious": ["Review the evidence before trusting this file.", "Run it only in an isolated sandbox."],
+        "Inconclusive": ["Do not treat this file as safe.", "Unpack or decrypt it, then analyse the files inside.", "Check it in an isolated sandbox."],
         "Clean": ["No action needed based on static evidence. Packed or dynamic behaviour would not be visible here."],
     }[assessment["verdict"]]
     return {"summary": points, "recommended_actions": actions, "source": "rules"}
@@ -248,6 +290,8 @@ def narrate_node(state: AnalysisState) -> dict:
         reply: Narrative = llm.with_structured_output(Narrative).invoke(messages)
     except Exception as exc:
         logger.warning("Narrative call failed", exc_info=True)
+        if attempts < MAX_NARRATIVE_ATTEMPTS:  # Models sometimes miss the structured format; one retry usually recovers.
+            return {"narrative_attempts": attempts, "narrative_feedback": "Your last reply was not in the required format. Reply only with the structured explanation."}
         return {
             "narrative": fallback_narrative(state), "narrative_attempts": MAX_NARRATIVE_ATTEMPTS, "narrative_feedback": "",
             "warnings": [f"Explainability Agent: LLM unavailable ({type(exc).__name__}), used rule-based explanation"],
@@ -299,6 +343,7 @@ def publish_node(state: AnalysisState) -> dict:
 
 def build_pipeline(checkpointer=None):
     graph = StateGraph(AnalysisState)
+    graph.add_node("unpack", unpack_node)
     graph.add_node("triage", triage_node)
     graph.add_node("evidence", evidence_node)
     graph.add_node("behaviour", behaviour_node)
@@ -306,7 +351,8 @@ def build_pipeline(checkpointer=None):
     graph.add_node("verify", verify_node)
     graph.add_node("narrate", narrate_node)
     graph.add_node("publish", publish_node)
-    graph.add_edge(START, "triage")
+    graph.add_edge(START, "unpack")
+    graph.add_edge("unpack", "triage")
     graph.add_edge("triage", "evidence")
     graph.add_edge("evidence", "behaviour")
     graph.add_edge("behaviour", "context")

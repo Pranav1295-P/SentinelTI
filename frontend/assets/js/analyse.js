@@ -251,13 +251,12 @@
     const unproven = (r.hypotheses || []).map((h) => `<li><span>${esc(h.statement)}</span></li>`).join('');
     const warnings = (r.warnings || []).map((w) => `<li><span>${esc(w)}</span></li>`).join('');
     const block = (title, items) => (items ? `<div class="verdict__label" style="margin-top:14px">${title}</div><ul class="card__log" style="margin-top:6px">${items}</ul>` : '');
-    const el = push(`<div class="verdict">
+    const el = push(`<div class="verdict" data-tone="${esc(a.tone)}">
       <div class="verdict__top"><div><div class="verdict__label">Verdict</div><div class="verdict__value">${esc(a.verdict)}</div></div>
       <div style="text-align:right"><div class="verdict__label">Risk</div><div class="verdict__score" data-count>0</div></div></div>
       ${block('Why', points)}${block('Recommended actions', actions)}${block('Unproven, not scored', unproven)}${block('Warnings', warnings)}
-      <div class="actions"><a class="glass-cta" data-emph="primary" href="report.html?id=${esc(a.id)}" data-swap="Open Attack Graph">Open Attack Graph</a>
-      <a class="glass-cta" href="${esc(API.reportUrl(a.id))}" data-swap="Download PDF">Download PDF</a></div></div>`);
-    S.applySwaps(el);
+      <div class="actions"><a class="btn" data-emph="primary" href="report.html?id=${esc(a.id)}">Open Attack Graph</a>
+      <a class="btn" href="${esc(API.reportUrl(a.id))}">Download PDF</a></div></div>`);
     const n = el.querySelector('[data-count]');
     if (window.gsap) gsap.to({ v: 0 }, { v: a.risk, duration: 1.4, ease: 'expo.out', onUpdate() { n.textContent = Math.round(this.targets()[0].v); } });
     else n.textContent = a.risk;
@@ -421,7 +420,7 @@
   renderTodo();
   renderSessions();
   if (window.gsap && !S.reduce) {
-    S.ready.then(() => gsap.from('.workspace > .panel', { y: 30, opacity: 0, duration: 1, ease: 'expo.out', stagger: .08 }));
+    gsap.from('.workspace > .panel', { y: 24, opacity: 0, duration: 1, ease: 'expo.out', stagger: .08, clearProps: 'all' });
   }
   API.me().then(async () => {
     await refreshSessions();

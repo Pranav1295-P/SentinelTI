@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,74 +8,76 @@
   <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/pages.css">
 </head>
-<body data-page="report">
+<body data-page="report" data-shell="app" data-ambient="off" data-brand-href="index.html">
   <main id="main">
-    <header class="report-head">
-      <div>
-        <h1 data-lines><span class="line-mask"><span>invoice_0923.exe</span></span></h1>
-        <div class="report-head__meta" data-reveal=".1">
-          <span class="chip" data-tone="crit"><span class="dot"></span>Critical</span>
-          <span class="chip">Emotet.Loader</span>
-          <span class="chip">PE32 · x86</span>
-          <span class="chip mono">e3b9…4f1a7c2d9e</span>
-          <span class="chip">Example report</span>
-        </div>
-      </div>
-      <div class="report-stats" data-reveal=".15">
-        <div><div class="stat__v" data-count="94">0</div><div class="stat__l">Risk</div></div>
-        <div><div class="stat__v" data-count="4">0</div><div class="stat__l">Techniques</div></div>
-        <div><div class="stat__v" data-count="2">0</div><div class="stat__l">Network IOCs</div></div>
-        <div><div class="stat__v" data-count="5">0</div><div class="stat__l">Agents</div></div>
-      </div>
-    </header>
-
-    <div class="graph-wrap">
-      <div class="graph" id="graph" data-lenis-prevent aria-label="Evidence graph. Use Tab to move between nodes and Enter to inspect.">
-        <svg id="graph-svg" role="group"></svg>
-        <div class="graph__title">Graphs &amp; Attack Vectors</div>
+    <section class="gstage" id="graph" aria-label="Attack graph">
+      <div class="gstage__host" id="graph-host">
         <div class="graph__dirs">
           <strong>Directions</strong>
           <ol>
             <li>Click a node to see its evidence</li>
-            <li>Drag nodes or the canvas to explore</li>
+            <li>Drag to orbit the scene</li>
             <li>Scroll or use +/– to zoom</li>
           </ol>
         </div>
         <div class="graph__legend" aria-hidden="true">
-          <span><i style="background:var(--on-surface)"></i>Sample</span>
-          <span><i style="background:var(--brand-violet)"></i>Evidence</span>
-          <span><i style="background:var(--signal)"></i>Capability</span>
-          <span><i style="background:var(--signal-amber)"></i>Network</span>
-          <span><i style="background:#a99cff"></i>Intel</span>
+          <span><i data-shape="sample"></i>Sample</span>
+          <span><i data-shape="evidence"></i>Evidence</span>
+          <span><i data-shape="capability"></i>Capability</span>
+          <span><i data-shape="network"></i>Network</span>
+          <span><i data-shape="intel"></i>Intel</span>
         </div>
-        <div class="graph__zoom">
+        <ol class="agent-steps" id="agent-steps" aria-hidden="true">
+          <li>01 Triage</li><li>02 Evidence</li><li>03 Behaviour</li><li>04 Threat Context</li><li>05 Verify</li>
+        </ol>
+        <div class="graph__zoom no-drag">
           <button type="button" id="z-out" aria-label="Zoom out"><svg width="12" height="12" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10"/></svg></button>
           <button type="button" id="z-in" aria-label="Zoom in"><svg width="12" height="12" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M8 3v10"/></svg></button>
           <button type="button" id="z-fit" aria-label="Reset view"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/></svg></button>
+          <button type="button" id="replay" class="graph__replay" aria-label="Replay the analysis"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8a5 5 0 1 0 1.6-3.7M4 1.5v3h3"/></svg>Replay</button>
           <span id="z-val">100%</span>
         </div>
       </div>
 
+      <header class="ghead">
+        <h1>invoice_0923.exe</h1>
+        <div class="ghead__meta">
+          <span class="chip" data-tone="crit"><span class="dot"></span>Critical</span>
+          <span class="chip">Emotet.Loader</span>
+          <span class="chip">PE32 · x86</span>
+          <span class="chip">Example report</span>
+        </div>
+        <div class="ghead__stats">
+          <div><div class="stat__v" data-count="94">0</div><div class="stat__l">Risk</div></div>
+          <div><div class="stat__v" data-count="4">0</div><div class="stat__l">Techniques</div></div>
+          <div><div class="stat__v" data-count="2">0</div><div class="stat__l">Network IOCs</div></div>
+          <div><div class="stat__v" data-count="5">0</div><div class="stat__l">Agents</div></div>
+        </div>
+      </header>
+
       <aside class="panel detail" aria-label="Attack vectors and detailed info">
-        <div class="panel__head"><h2 class="panel__title">Attack Vectors &amp; Detail</h2></div>
+        <div class="panel__head">
+          <h2 class="panel__title">Attack Vectors &amp; Detail</h2>
+          <a class="btn" data-size="sm" id="graph-back" href="index.html">Home</a>
+        </div>
         <div class="detail__body" id="detail" aria-live="polite" data-lenis-prevent></div>
         <div class="panel__foot no-print">
-          <button type="button" class="glass-cta" data-emph="primary" id="pdf" data-swap="PDF Download">PDF Download</button>
+          <button type="button" class="btn" data-emph="primary" id="pdf">PDF Download</button>
         </div>
       </aside>
-    </div>
+    </section>
 
     <section class="mitre" aria-labelledby="mitre-h">
       <div class="section__head"><h2 id="mitre-h" data-reveal>MITRE ATT&amp;CK Mapping</h2><span class="chip" data-reveal>Threat Context Agent</span></div>
-      <div class="lib-table" id="mitre-table" role="table" aria-label="ATT&CK techniques">
+      <div class="lib-table" id="mitre-table" role="table" aria-label="ATT&amp;CK techniques">
         <div class="lib-row lib-row--head" role="row"><span role="columnheader">ID</span><span role="columnheader">Technique</span><span role="columnheader">Evidence</span><span role="columnheader" class="num">Confidence</span></div>
         <a class="lib-row" role="row" href="#graph" data-node="inject"><span role="cell" class="mono">T1055.002</span><span role="cell">Process Injection: PE Injection</span><span role="cell" class="lib-row__family">VirtualAllocEx → WriteProcessMemory → CreateRemoteThread</span><span role="cell" class="num">0.93</span></a>
         <a class="lib-row" role="row" href="#graph" data-node="persist"><span role="cell" class="mono">T1547.001</span><span role="cell">Registry Run Keys</span><span role="cell" class="lib-row__family">RegSetValueExW + Run-key string</span><span role="cell" class="num">0.88</span></a>
-        <a class="lib-row" role="row" href="#graph" data-node="c2"><span role="cell" class="mono">T1071.001</span><span role="cell">Web Protocols C2</span><span role="cell" class="lib-row__family">2 hard-coded endpoints, RC4 POST body</span><span role="cell" class="num">0.84</span></a>
+        <a class="lib-row" role="row" href="#graph" data-node="c2"><span role="cell" class="mono">T1071.001</span><span role="cell">Web Protocols</span><span role="cell" class="lib-row__family">2 hard-coded endpoints, HTTP POST</span><span role="cell" class="num">0.84</span></a>
         <a class="lib-row" role="row" href="#graph" data-node="upx"><span role="cell" class="mono">T1027.002</span><span role="cell">Software Packing</span><span role="cell" class="lib-row__family">UPX0 empty, UPX1 entropy 7.91</span><span role="cell" class="num">0.97</span></a>
       </div>
     </section>
@@ -89,6 +91,7 @@
   <script src="assets/js/data.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/core.js"></script>
+  <script src="assets/js/graph-engine.js"></script>
   <script src="assets/js/graph.js"></script>
 </body>
 </html>

@@ -2,7 +2,6 @@
 (function () {
   const S = window.Sentinel;
   const API = window.SentinelAPI;
-  const v = window.SentinelVortex.make(document.querySelector('.auth canvas'), { scale: .5 });
   const form = document.getElementById('login');
   const submit = form.querySelector('button[type="submit"]');
 
@@ -10,10 +9,7 @@
   const next = new URLSearchParams(location.search).get('next') || '';
   const target = /^[a-z]+\.html(\?id=[0-9a-f-]{36})?$/.test(next) ? next : 'analyse.html';
 
-  S.ready.then(() => {
-    v && v.show();
-    if (window.gsap && !S.reduce) gsap.from(form, { y: 40, opacity: 0, duration: 1.1, ease: 'expo.out', delay: .1 });
-  });
+  if (window.gsap && !S.reduce) gsap.from(form, { y: 40, opacity: 0, filter: 'blur(14px)', duration: 1.2, ease: 'expo.out', delay: .1, clearProps: 'filter' });
 
   API.me().then(() => { location.replace(target); }).catch(() => {});
 

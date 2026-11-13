@@ -4,13 +4,13 @@ window.SentinelData = {
     {
       id: 'triage', n: '01', name: 'Triage Agent',
       aim: 'Identifies the real file type from magic bytes, computes SHA-256 and checks size before anything else runs.',
-      tools: ['Magic bytes', 'SHA-256', 'File size', 'Pydantic'],
+      tools: ['Magic bytes', 'SHA-256', 'ssdeep', 'Pydantic'],
       out: 'Validated sample handle, file class, fingerprint',
     },
     {
       id: 'evidence', n: '02', name: 'Evidence Agent',
       aim: 'Extracts structured evidence — PE metadata, sections, imports and YARA matches. Structured evidence, not a vague LLM output.',
-      tools: ['LIEF', 'yara-python', 'FLOSS', 'Entropy'],
+      tools: ['LIEF', 'yara-python', 'Strings & IOCs', 'Entropy'],
       out: 'Headers, sections, imports, strings, rule hits',
     },
     {
@@ -31,6 +31,22 @@ window.SentinelData = {
       tools: ['Neo4j graph', 'Fact check', 'PDF render'],
       out: 'Attack graph, narrative, PDF report',
     },
+  ],
+
+  tools: [
+    { name: 'LIEF', use: 'Parses PE, ELF and Mach-O headers, sections, imports and exports.', agent: '02', art: 'entropy' },
+    { name: 'YARA', use: 'Matches files against a rule set you can extend with your own rules.', agent: '02', art: 'yara' },
+    { name: 'Strings & IOCs', use: 'Pulls ASCII and UTF-16 strings, then URLs, IPs, domains and registry keys.', agent: '02', art: 'strings' },
+    { name: 'Fuzzy hashes', use: 'ssdeep and import hashes find samples that share structure.', agent: '01', art: 'hash' },
+    { name: 'FLOSS', use: 'Optional add-on that recovers stack and decoded strings from obfuscated code.', agent: '02', art: 'hex' },
+    { name: 'Capability rules', use: 'Correlates APIs and strings into capabilities, with the proof attached.', agent: '03', art: 'chain' },
+    { name: 'Import inspector', use: 'Lets an agent check the import table when something looks incomplete.', agent: '03', art: 'imports' },
+    { name: 'MITRE ATT&CK', use: 'Maps proven capabilities to techniques from a local catalogue.', agent: '04', art: 'attck' },
+    { name: 'Threat notes', use: 'Searches your own internal notes and reference documents.', agent: '04', art: 'radar' },
+    { name: 'VirusTotal', use: 'Looks up existing detections by hash. The file is never uploaded.', agent: '04', art: 'rep' },
+    { name: 'AlienVault OTX', use: 'Checks community threat pulses for the same hash.', agent: '04', art: 'rep' },
+    { name: 'Neo4j graph', use: 'Links samples that share indicators, privately for each user.', agent: '05', art: 'graph' },
+    { name: 'PDF report', use: 'Publishes the verdict, evidence and defanged indicators as a PDF.', agent: '05', art: 'pdf' },
   ],
 
   samples: [

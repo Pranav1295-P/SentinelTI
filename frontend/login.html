@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,16 +8,13 @@
   <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/pages.css">
 </head>
-<body data-page="login" data-nav-static>
+<body data-page="login" data-shell="app" data-brand-href="index.html" data-no-lenis>
   <main id="main" class="auth">
-    <canvas aria-hidden="true"></canvas>
     <form class="auth__card" id="login" novalidate>
-      <div class="glass-effect" aria-hidden="true"><span class="glass-effect__fill"></span><span class="glass-effect__hl"></span><span class="glass-effect__edge-l"></span><span class="glass-effect__edge-d"></span><span class="glass-effect__glow"></span></div>
-      <img class="auth__mark" src="assets/img/mark.svg" alt="">
       <h1>Welcome back</h1>
       <p>Sign in to your SentinelTI workspace.</p>
       <div class="field">
@@ -31,16 +28,15 @@
         <span class="field__err" aria-live="polite"></span>
       </div>
       <div class="auth__row">
-        <label><input type="checkbox" name="remember"> Remember me</label>
         <a href="#" data-toast="Ask your administrator to reset your password">Forgot password?</a>
       </div>
-      <button type="submit" class="glass-cta" data-emph="primary" data-swap="Continue">Continue</button>
+      <button type="submit" class="btn" data-emph="primary" data-size="lg">Continue</button>
       <p class="auth__foot">New to SentinelTI? <a href="#" data-toast="Ask your administrator for an account">Request access</a></p>
     </form>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="assets/js/vortex.js"></script>
+  <script src="assets/js/ambient.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/core.js"></script>
   <script src="assets/js/login.js"></script>

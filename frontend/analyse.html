@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,17 +8,17 @@
   <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/pages.css">
 </head>
-<body data-page="analyse" data-nav-static>
+<body data-page="analyse" data-shell="app" data-ambient="off" data-no-lenis>
   <main id="main" class="workspace">
     <!-- Sessions -->
     <aside class="panel panel--sessions" aria-label="Sessions">
       <div class="panel__head">
         <h2 class="panel__title">Analyse</h2>
-        <button type="button" class="glass-cta" data-size="sm" id="new-session" data-swap="New">New</button>
+        <button type="button" class="btn" data-size="sm" id="new-session">New</button>
       </div>
       <div class="panel__label">Sessions</div>
       <div class="panel__scroll" data-lenis-prevent>
@@ -64,17 +64,13 @@
         <ol class="todo" id="todo"></ol>
       </div>
       <div class="panel__foot">
-        <a class="glass-cta" href="report.html" id="open-graph" data-swap="Open Attack Graph">Open Attack Graph</a>
-        <button type="button" class="glass-cta" data-emph="primary" id="pdf" data-swap="Download PDF Report">Download PDF Report</button>
+        <a class="btn" href="report.html" id="open-graph">Open Attack Graph</a>
+        <button type="button" class="btn" data-emph="primary" id="pdf">Download PDF Report</button>
       </div>
     </aside>
   </main>
 
-  <footer data-footer></footer>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
   <script src="assets/js/data.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/core.js"></script>

@@ -1,118 +1,104 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SentinelTI | Autonomous Threat Intelligence</title>
-  <meta name="description" content="SentinelTI — an autonomous, five-agent static malware analysis and threat intelligence platform by Relativity.">
+  <meta name="description" content="Five agents analyse a suspicious file without ever running it, then explain the verdict with evidence.">
   <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/pages.css">
 </head>
-<body data-page="home">
-  <div class="boot" aria-hidden="true">
-    <div class="boot__row">
-      <div class="boot__clip"><div class="boot__word"><svg viewBox="52 160 349 346"><path fill="currentColor" fill-rule="evenodd" d="M122 165 228 222 332 165 332 228 395 228 330 333 395 438 332 438 332 500 228 440 122 500 122 438 58 438 125 333 58 228 122 228ZM125 232 170 333 125 435 228 378 330 435 285 333 330 232 228 290Z"/></svg>SentinelTI</div></div>
-      <div class="boot__clip" style="grid-row: span 2"><div class="boot__num">0</div></div>
-      <div class="boot__bar"><div class="boot__fill"></div></div>
-    </div>
-  </div>
-
+<body data-page="home" data-shell="site">
   <main id="main">
-    <!-- Landing -->
-    <section class="landing" aria-label="Welcome to SentinelTI">
-      <canvas class="landing__field" aria-hidden="true"></canvas>
-      <div class="landing__veil" aria-hidden="true"></div>
 
-      <div class="landing__center">
-        <h1 class="landing__title">
-          <span class="line-mask"><span data-land-line>Threat Intelligence Read</span></span>
-          <span class="line-mask"><span data-land-line>from Every Byte.</span></span>
-          <span class="line-mask"><span data-land-line class="muted">In Seconds.</span></span>
-        </h1>
-        <div class="landing__cta" data-land-cta>
-          <a class="glass-cta" data-emph="primary" href="analyse.html" data-swap="Analyse a Sample">Analyse a Sample</a>
-          <a class="glass-cta" href="about.html" data-swap="How it Works">How it Works</a>
-        </div>
-      </div>
-
-      <div class="landing__base">
-        <a class="land-credit" href="report.html" data-land-credit>
-          <span class="land-credit__thumb" aria-hidden="true"><canvas class="land-credit__canvas"></canvas></span>
-          <span class="land-credit__meta">Latest verdict<br><span>Emotet.Loader · Critical</span></span>
+    <!-- Hero -->
+    <section class="hero" id="top" data-ambient=".5,.3,.5,.3">
+      <div class="hero__mosaic" id="mosaic" aria-hidden="true"></div>
+      <div class="hero__shade" aria-hidden="true"></div>
+      <h1 class="hero__word" id="hero-word">SentinelTI</h1>
+      <div class="hero__foot">
+        <p class="hero__sub">Your autonomous threat intelligence platform, built by Relativity.</p>
+        <a class="btn" data-emph="primary" data-size="lg" href="analyse.html">Analyse a Sample</a>
+        <p class="hero__note">Static analysis only. Samples are never executed.</p>
+        <a class="hero__chev" href="#overview" aria-label="Scroll to overview">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg>
         </a>
-        <nav class="land-legal" aria-label="Legal" data-land-legal>
-          <a href="#" data-toast="Privacy policy coming soon" data-swap>Privacy</a>
-          <a href="#" data-toast="Terms coming soon" data-swap>Terms</a>
-          <a href="#" data-toast="All systems operational" data-swap>Status</a>
-        </nav>
       </div>
-      <div class="scroll-cue" aria-hidden="true"><span></span></div>
+      <button type="button" class="round-btn hero__pause" id="hero-pause" aria-label="Pause background motion" aria-pressed="false">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2h3v12H4zM9 2h3v12H9z"/></svg>
+      </button>
     </section>
 
-    <!-- Library -->
-    <section class="section library" aria-labelledby="lib-h">
-      <div class="section__head">
-        <h2 id="lib-h" data-reveal>Recent Analyses</h2>
-        <div class="lib-controls" data-reveal=".05">
-          <div class="seg" role="group" aria-label="Filter verdicts">
-            <span class="seg__pill" aria-hidden="true"></span>
-            <button type="button" aria-pressed="true" data-filter="all" data-swap>All</button>
-            <button type="button" aria-pressed="false" data-filter="crit" data-swap>Critical</button>
-            <button type="button" aria-pressed="false" data-filter="clean" data-swap>Clean</button>
-          </div>
-        </div>
-      </div>
-      <div class="lib-table" role="table" aria-label="Recent analyses">
-        <div class="lib-row lib-row--head" role="row">
-          <span role="columnheader">Agent Signal</span>
-          <span role="columnheader">Sample</span>
-          <span role="columnheader">Verdict</span>
-          <span role="columnheader" class="num">Risk</span>
-          <span role="columnheader" class="num">Analysed</span>
-        </div>
-        <div class="lib-body" id="lib-body"></div>
-      </div>
-    </section>
-
-    <!-- Statement -->
-    <section class="statement" aria-label="Statement">
-      <p class="statement__text" data-lines>
-        <span class="line-mask"><span>A verdict is only useful when</span></span>
-        <span class="line-mask"><span>you can see the evidence behind it.</span></span>
-      </p>
+    <!-- Overview -->
+    <section class="ov" id="overview" data-ambient=".5,.55,.6,.25">
+      <h2 class="xl ov__title" data-reveal>See every threat<br>in evidence</h2>
+      <div class="frame" id="demo" data-reveal=".1"></div>
+      <p class="ov__cap" data-reveal>An example run. Drop a file and five agents work through it live, in front of you.</p>
     </section>
 
     <!-- Agents -->
-    <section class="section agents" aria-labelledby="agents-h">
-      <div class="chapter">
-        <div class="chapter__label">
-          <span class="chapter__num">1.0</span>
-          <h2 id="agents-h" data-lines>
-            <span class="line-mask"><span>Five Agents.</span></span>
-            <span class="line-mask"><span class="muted">One Verdict.</span></span>
-          </h2>
-        </div>
-        <div class="chapter__body" data-reveal>
-          <p>Every sample is passed through five specialised agents. Each one calls real static-analysis tools, validates its input, and hands structured evidence to the next — never a vague model guess.</p>
-        </div>
+    <section class="agents" id="agents" data-ambient=".5,.4,.72,.45">
+      <div class="agents__head">
+        <h2 class="xl" data-reveal>Five Agents</h2>
+        <p class="lead" data-reveal=".05">SentinelTI works like an analyst, one step at a time. Each agent has one job, and hands its evidence to the next.</p>
       </div>
-      <ol class="agent-list" id="agent-list"></ol>
+      <div class="carousel" data-reveal=".1">
+        <div class="carousel__track" id="agent-track" tabindex="0" aria-label="The five agents"></div>
+        <button type="button" class="round-btn carousel__nav carousel__nav--prev" id="agent-prev" aria-label="Previous agent"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m10 3-5 5 5 5"/></svg></button>
+        <button type="button" class="round-btn carousel__nav carousel__nav--next" id="agent-next" aria-label="Next agent"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m6 3 5 5-5 5"/></svg></button>
+      </div>
     </section>
 
-    <!-- CTA band -->
-    <section class="cta-band" aria-label="Start">
-      <h2 data-lines>
-        <span class="line-mask"><span>Drop a sample.</span></span>
-        <span class="line-mask"><span class="muted">Read the threat.</span></span>
-      </h2>
-      <div class="landing__cta" data-reveal>
-        <a class="glass-cta" data-emph="primary" href="analyse.html" data-swap="Start Analysis">Start Analysis</a>
-        <a class="glass-cta" href="report.html" data-swap="View Example Graph">View Example Graph</a>
+    <!-- Capabilities -->
+    <section class="caps" id="capabilities">
+      <p class="caps__label" data-reveal>Capabilities</p>
+      <div id="caps-body"></div>
+      <div class="caps__dock" id="caps-dock">
+        <div class="caps__dock-in">
+          <nav class="caps__tabs" id="caps-tabs" aria-label="Capabilities"><span class="caps__pill" aria-hidden="true"></span></nav>
+          <a class="btn" data-emph="primary" href="analyse.html">Analyse a Sample</a>
+        </div>
       </div>
+    </section>
+
+    <!-- Tools -->
+    <section class="tools" id="tools" data-ambient=".25,.45,.75,.35">
+      <p class="section-label" data-reveal>Tools</p>
+      <h2 class="xl" data-reveal>Real tools,<br>not guesses</h2>
+      <p class="lead" data-reveal=".05">Every finding comes from a tool an agent called. The model chooses what to run, but only the tool's structured output counts as evidence.</p>
+      <div class="tools__grid">
+        <div class="tools__preview" id="tool-preview" aria-hidden="true"></div>
+        <ol class="tools__list" id="tool-list"></ol>
+      </div>
+    </section>
+
+    <!-- Recent analyses -->
+    <section class="wheel-sec" id="analyses" data-ambient=".72,.55,.72,.5">
+      <div class="wheel-sec__head">
+        <h2 class="xl" data-reveal>Recent<br>Analyses</h2>
+        <div data-reveal=".05">
+          <p class="lead" id="wheel-intro">Example results. Sign in and analyse a file, and your own appear here.</p>
+          <a class="btn" href="analyse.html">Analyse a Sample</a>
+        </div>
+      </div>
+      <div class="wheel" id="wheel"></div>
+    </section>
+
+    <!-- Trust -->
+    <section class="trust" id="trust" data-ambient=".5,.42,.75,.4">
+      <p class="section-label" data-reveal>Trust</p>
+      <h2 class="xl" data-reveal>Why you can<br>trust the verdict</h2>
+      <div class="trust__grid" id="trust-grid"></div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq" id="faq" data-ambient=".5,.75,.65,.3">
+      <h2 class="section-title" data-reveal>Questions?</h2>
+      <div class="faq__list" id="faq-list"></div>
     </section>
   </main>
 
@@ -122,9 +108,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
   <script src="assets/js/data.js"></script>
-  <script src="assets/js/vortex.js"></script>
+  <script src="assets/js/ambient.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/core.js"></script>
+  <script src="assets/js/tiles.js"></script>
+  <script src="assets/js/graph-engine.js"></script>
   <script src="assets/js/home.js"></script>
 </body>
 </html>

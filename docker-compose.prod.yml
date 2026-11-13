@@ -1,0 +1,20 @@
+# Production override: serve the site over HTTPS on ports 80 and 443.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Set SITE_ADDRESS in .env to a domain that points at this server, for example
+# SITE_ADDRESS=sentinelti.example.com. Caddy then gets and renews a certificate
+# automatically and redirects HTTP to HTTPS. Also set COOKIE_SECURE=true.
+services:
+  caddy:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Keep certificates across restarts, or Let's Encrypt rate limits can lock the site out.
+      - caddydata:/data
+      - caddyconfig:/config
+
+volumes:
+  caddydata:
+  caddyconfig:

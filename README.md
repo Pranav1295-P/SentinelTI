@@ -57,6 +57,24 @@ uv run uvicorn app.main:app --port 8020 --reload --reload-dir app
 
 API docs are at `/api/docs` outside production. `GET /api/ready` shows which integrations are configured.
 
+### Deploy with HTTPS
+
+On a server with ports 80 and 443 open and a domain pointing at it, set these in `.env`:
+
+```bash
+SITE_ADDRESS=sentinelti.example.com
+COOKIE_SECURE=true
+```
+
+Then start the stack with the production override. Caddy gets and renews the certificate itself:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker compose exec api python -m app.cli create-user you@company.com
+```
+
+The stack needs about 8 GB of RAM. Postgres, Redis and Neo4j only listen on the server itself, so keep every other port closed.
+
 ## API keys
 
 All optional. Without them the pipeline still runs on its deterministic tools and rule-based explanations, and every result says which mode produced it.
